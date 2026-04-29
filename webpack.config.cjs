@@ -6,5 +6,8 @@ module.exports = {
     filename: 'main.js',
     path: path.resolve(__dirname, 'dist'),
   },
-  mode: 'development', // Facilita o debug no The Odin Project
+  devServer: {
+    static: './dist', // Aponta o servidor para a pasta correta
+  },
+  mode: 'development',
 };
