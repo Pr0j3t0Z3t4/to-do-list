@@ -1,6 +1,7 @@
 import AppController from './AppController.js';
 import DOM from './DOM.js';
 import Task from './Task.js';
+import Project from './Project.js'; // Importante para criar novos projetos
 
 // Inicializa o controle da aplicação
 const app = new AppController();
@@ -22,29 +23,77 @@ if (app.projects[0].tasks.length === 0) {
 
 // --- Event Listeners (Interatividade) ---
 
-// 1. Clicar em um projeto na barra lateral
+// 1. Alternar entre Projetos
 document.getElementById('project-list').addEventListener('click', (e) => {
   if (e.target.tagName === 'LI') {
-    // Encontra o índice do projeto clicado usando o ID armazenado no dataset
     const clickedId = e.target.dataset.projectId;
     currentProjectIndex = app.projects.findIndex(proj => proj.id === clickedId);
     render();
   }
 });
 
-// 2. Clicar no botão "+ Nova Tarefa" (simples prompt para teste agora)
-document.getElementById('btn-new-task').addEventListener('click', () => {
-    const title = prompt("Nome da Tarefa:");
-    if (title) {
-        const description = prompt("Descrição (opcional):");
-        const dueDate = prompt("Data de Vencimento (YYYY-MM-DD):", "2026-06-10");
-        const priority = prompt("Prioridade (Alta, Media, Baixa):", "Media");
-        
-        const novaTarefa = new Task(title, description, dueDate, priority);
-        app.projects[currentProjectIndex].addTask(novaTarefa);
-        app.saveData(); // Salva as mudanças
-        render(); // Atualiza a tela
+// --- Controles dos Modais ---
+const modalProject = document.getElementById('modal-project');
+const modalTask = document.getElementById('modal-task');
+
+// 2. Abrir Modais
+document.getElementById('btn-new-project').addEventListener('click', () => modalProject.showModal());
+document.getElementById('btn-new-task').addEventListener('click', () => modalTask.showModal());
+
+// 3. Criar Novo Projeto (Submit do Form)
+document.getElementById('form-project').addEventListener('submit', (e) => {
+    e.preventDefault(); // Evita que a página recarregue
+    const name = document.getElementById('project-name').value;
+    
+    const newProject = new Project(name);
+    app.projects.push(newProject);
+    
+    // Muda o foco para o projeto recém-criado
+    currentProjectIndex = app.projects.length - 1; 
+    
+    app.saveData();
+    render();
+    modalProject.close();
+    e.target.reset(); // Limpa os campos do modal
+});
+
+// 4. Criar Nova Tarefa (Submit do Form)
+document.getElementById('form-task').addEventListener('submit', (e) => {
+    e.preventDefault();
+    const title = document.getElementById('task-title').value;
+    const desc = document.getElementById('task-desc').value;
+    const date = document.getElementById('task-date').value;
+    const priority = document.getElementById('task-priority').value;
+    
+    const newTask = new Task(title, desc, date, priority);
+    app.projects[currentProjectIndex].addTask(newTask);
+    
+    app.saveData();
+    render();
+    modalTask.close();
+    e.target.reset();
+});
+// 5. Concluir ou Excluir Tarefa
+document.getElementById('task-list').addEventListener('click', (e) => {
+    // Verifica se clicou em um botão com data-action
+    const action = e.target.dataset.action;
+    if (!action) return;
+
+    // Encontra o ID da tarefa subindo no DOM até o card
+    const taskCard = e.target.closest('.task-card');
+    const taskId = taskCard.dataset.taskId;
+    
+    const project = app.projects[currentProjectIndex];
+    const task = project.tasks.find(t => t.id === taskId);
+
+    if (action === 'delete') {
+        project.removeTask(taskId);
+    } else if (action === 'complete') {
+        task.completed = !task.completed;
     }
+
+    app.saveData();
+    render();
 });
 
 // Inicializa a tela pela primeira vez

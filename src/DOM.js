@@ -1,7 +1,6 @@
-import { parseISO, format } from 'date-fns';
+import { parseISO, format, isValid } from 'date-fns';
 
 export default class DOM {
-  // Renderiza a lista de projetos na barra lateral
   static renderProjects(projects, activeProjectIndex) {
     const list = document.getElementById('project-list');
     list.innerHTML = '';
@@ -10,18 +9,15 @@ export default class DOM {
       const li = document.createElement('li');
       li.textContent = project.name;
       
-      // Adiciona a classe 'active' se for o projeto selecionado
       if (index === activeProjectIndex) {
         li.classList.add('active');
       }
       
-      // Armazena o ID do projeto para sabermos qual foi clicado
       li.dataset.projectId = project.id;
       list.appendChild(li);
     });
   }
 
-  // Renderiza as tarefas do projeto atual na área principal
   static renderTasks(project) {
     document.getElementById('current-project-title').textContent = project.name;
     const list = document.getElementById('task-list');
@@ -30,23 +26,37 @@ export default class DOM {
     project.tasks.forEach(task => {
       const div = document.createElement('div');
       
-      // Adiciona as classes para o estilo básico e de prioridade
       div.className = 'task-card';
       const priorityClass = task.priority ? task.priority.toLowerCase() : 'low';
       div.classList.add(`priority-${priorityClass}`);
       
-      // Armazena o ID da tarefa para interações futuras
       div.dataset.taskId = task.id;
 
-      // Formatando a data com date-fns (ex: 01 de Mai)
-      // Usamos parseISO para converter a string de data que vem do JSON
-      const formattedDate = task.dueDate ? format(parseISO(task.dueDate), 'dd \'de\' MMM') : 'Sem data';
-
-      // Criação dinâmica do conteúdo do card
+      let formattedDate = 'Sem data';
+      if (task.dueDate) {
+          const parsedDate = parseISO(task.dueDate);
+          if (isValid(parsedDate)) {
+              formattedDate = format(parsedDate, 'dd \'de\' MMM');
+          }
+      }
+      // Uso obrigatório de crases (`) abaixo
       div.innerHTML = `
-        <strong>${task.title}</strong>
+        <div style="display: flex; justify-content: space-between; align-items: start;">
+            <strong style="text-decoration: ${task.completed ? 'line-through' : 'none'}; color: ${task.completed ? '#8b949e' : 'var(--text-title)'}">
+                ${task.title}
+            </strong>
+            <div style="display: flex; gap: 5px;">
+                <button data-action="complete" style="padding: 2px 8px; border-color: #d29922; color: #d29922;">✔</button>
+                <button data-action="delete" style="padding: 2px 8px; border-color: #ff7b72; color: #ff7b72;">✖</button>
+            </div>
+        </div>
         <p>${task.description || 'Nenhuma descrição'}</p>
         <small>Até: ${formattedDate}</small>
+        
+        <div class="task-details" style="display: none; margin-top: 15px; border-top: 1px dashed var(--border-color); padding-top: 10px;">
+            <small style="color: var(--text-main)"><b>Notas:</b> ${task.notes || 'Nenhuma nota adicional.'}</small><br>
+            <small style="color: var(--text-main)"><b>Criada em:</b> ${task.id}</small>
+        </div>
       `;
       list.appendChild(div);
     });

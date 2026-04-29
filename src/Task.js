@@ -9,5 +9,6 @@ export default class Task extends Entity {
     this.priority = priority;
     this.notes = notes;
     this.checklist = [];
+    this.completed = false;
   }
 }

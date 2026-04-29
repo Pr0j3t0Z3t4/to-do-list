@@ -21,6 +21,7 @@ export default class AppController {
           const task = new Task(taskData.title, taskData.description, taskData.dueDate, taskData.priority, taskData.notes);
           task.id = taskData.id;
           task.checklist = taskData.checklist;
+          task.completed = taskData.completed || false;
           return task;
         });
         
