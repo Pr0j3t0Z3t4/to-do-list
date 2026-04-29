@@ -7,13 +7,18 @@ export default class DOM {
 
     projects.forEach((project, index) => {
       const li = document.createElement('li');
-      li.textContent = project.name;
-      
-      if (index === activeProjectIndex) {
-        li.classList.add('active');
-      }
-      
       li.dataset.projectId = project.id;
+      
+      // Layout flex para separar nome do botão "X"
+      li.style.display = 'flex';
+      li.style.justifyContent = 'space-between';
+      
+let content = `<span>${project.name}</span>`;
+      // Agora o botão de deletar aparece para todos os projetos
+      content += `<span class="btn-delete-proj" style="color: var(--color1); font-weight: bold; cursor: pointer;" title="Excluir Projeto">✖</span>`;
+      li.innerHTML = content;
+      
+      if (index === activeProjectIndex) li.classList.add('active');
       list.appendChild(li);
     });
   }
@@ -23,23 +28,27 @@ export default class DOM {
     const list = document.getElementById('task-list');
     list.innerHTML = '';
 
-    project.tasks.forEach(task => {
+    // Ordena as tarefas: pendentes (false = 0) vêm antes das concluídas (true = 1)
+    const sortedTasks = [...project.tasks].sort((a, b) => a.completed - b.completed);
+
+    sortedTasks.forEach(task => {
       const div = document.createElement('div');
-      
       div.className = 'task-card';
       const priorityClass = task.priority ? task.priority.toLowerCase() : 'low';
       div.classList.add(`priority-${priorityClass}`);
-      
       div.dataset.taskId = task.id;
+
+      // Efeito visual: tarefas concluídas ficam transparentes/apagadas
+      if (task.completed) {
+          div.style.opacity = '0.4';
+      }
 
       let formattedDate = 'Sem data';
       if (task.dueDate) {
           const parsedDate = parseISO(task.dueDate);
-          if (isValid(parsedDate)) {
-              formattedDate = format(parsedDate, 'dd \'de\' MMM');
-          }
+          if (isValid(parsedDate)) formattedDate = format(parsedDate, 'dd \'de\' MMM');
       }
-      // Uso obrigatório de crases (`) abaixo
+
       div.innerHTML = `
         <div style="display: flex; justify-content: space-between; align-items: start;">
             <strong style="text-decoration: ${task.completed ? 'line-through' : 'none'}; color: ${task.completed ? '#8b949e' : 'var(--text-title)'}">
@@ -54,7 +63,7 @@ export default class DOM {
         <small>Até: ${formattedDate}</small>
         
         <div class="task-details" style="display: none; margin-top: 15px; border-top: 1px dashed var(--border-color); padding-top: 10px;">
-            <small style="color: var(--text-main)"><b>Notas:</b> ${task.notes || 'Nenhuma nota adicional.'}</small><br>
+            <small style="color: var(--text-main)"><b>Notas:</b> ${task.notes || 'Nenhuma nota.'}</small><br>
             <small style="color: var(--text-main)"><b>Criada em:</b> ${task.id}</small>
         </div>
       `;

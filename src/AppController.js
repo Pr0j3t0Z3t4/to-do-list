@@ -11,11 +11,10 @@ export default class AppController {
   loadData() {
     const rawData = Storage.load();
     
-    if (rawData) {
-      // Reidratação: reconstrói as instâncias de Project e Task
+    if (rawData && rawData.length > 0) {
       this.projects = rawData.map(projData => {
         const project = new Project(projData.name);
-        project.id = projData.id; // Mantém o ID original
+        project.id = projData.id;
         
         project.tasks = projData.tasks.map(taskData => {
           const task = new Task(taskData.title, taskData.description, taskData.dueDate, taskData.priority, taskData.notes);
@@ -28,12 +27,20 @@ export default class AppController {
         return project;
       });
     } else {
-      // Projeto padrão caso seja o primeiro acesso
       this.projects.push(new Project('Inbox'));
     }
   }
 
   saveData() {
     Storage.save(this.projects);
+  }
+
+  deleteProject(projectId) {
+    this.projects = this.projects.filter(p => p.id !== projectId);
+    
+    // Se excluir todos, cria um novo "Inbox" limpo
+    if (this.projects.length === 0) {
+      this.projects.push(new Project('Inbox'));
+    }
   }
 }

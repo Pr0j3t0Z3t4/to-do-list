@@ -1,63 +1,55 @@
 import AppController from './AppController.js';
 import DOM from './DOM.js';
 import Task from './Task.js';
-import Project from './Project.js'; // Importante para criar novos projetos
+import Project from './Project.js';
 
-// Inicializa o controle da aplicação
 const app = new AppController();
-let currentProjectIndex = 0; // Estado: qual projeto está selecionado
+let currentProjectIndex = 0;
 
-// Função de re-renderização para atualizar tudo na tela
 const render = () => {
   DOM.renderProjects(app.projects, currentProjectIndex);
   DOM.renderTasks(app.projects[currentProjectIndex]);
 };
 
-// --- Teste: Adiciona uma tarefa de exemplo se o Inbox estiver vazio ---
-if (app.projects[0].tasks.length === 0) {
-    app.projects[0].addTask(new Task("Aprender Webpack", "Seguir o tutorial da Etapa 1", "2026-05-15", "Alta"));
-    app.projects[0].addTask(new Task("Criar DOM Module", "Usar o date-fns para formatar data", "2026-06-01", "Media"));
-    app.saveData(); // Salva no LocalStorage
-}
-// ---------------------------------------------------------------------
-
-// --- Event Listeners (Interatividade) ---
-
-// 1. Alternar entre Projetos
+// 1. Alternar ou Deletar Projetos
 document.getElementById('project-list').addEventListener('click', (e) => {
-  if (e.target.tagName === 'LI') {
-    const clickedId = e.target.dataset.projectId;
-    currentProjectIndex = app.projects.findIndex(proj => proj.id === clickedId);
-    render();
+  const li = e.target.closest('li');
+  if (!li) return;
+  const clickedId = li.dataset.projectId;
+
+  if (e.target.classList.contains('btn-delete-proj')) {
+      app.deleteProject(clickedId);
+      currentProjectIndex = 0; 
+      app.saveData();
+      render();
+      return; 
   }
+
+  currentProjectIndex = app.projects.findIndex(proj => proj.id === clickedId);
+  render();
 });
 
-// --- Controles dos Modais ---
+// 2. Abrir Modais
 const modalProject = document.getElementById('modal-project');
 const modalTask = document.getElementById('modal-task');
 
-// 2. Abrir Modais
 document.getElementById('btn-new-project').addEventListener('click', () => modalProject.showModal());
 document.getElementById('btn-new-task').addEventListener('click', () => modalTask.showModal());
 
-// 3. Criar Novo Projeto (Submit do Form)
+// 3. Criar Novo Projeto
 document.getElementById('form-project').addEventListener('submit', (e) => {
-    e.preventDefault(); // Evita que a página recarregue
+    e.preventDefault();
     const name = document.getElementById('project-name').value;
-    
     const newProject = new Project(name);
     app.projects.push(newProject);
-    
-    // Muda o foco para o projeto recém-criado
     currentProjectIndex = app.projects.length - 1; 
-    
     app.saveData();
     render();
     modalProject.close();
-    e.target.reset(); // Limpa os campos do modal
+    e.target.reset();
 });
 
-// 4. Criar Nova Tarefa (Submit do Form)
+// 4. Criar Nova Tarefa
 document.getElementById('form-task').addEventListener('submit', (e) => {
     e.preventDefault();
     const title = document.getElementById('task-title').value;
@@ -73,19 +65,27 @@ document.getElementById('form-task').addEventListener('submit', (e) => {
     modalTask.close();
     e.target.reset();
 });
-// 5. Concluir ou Excluir Tarefa
-document.getElementById('task-list').addEventListener('click', (e) => {
-    // Verifica se clicou em um botão com data-action
-    const action = e.target.dataset.action;
-    if (!action) return;
 
-    // Encontra o ID da tarefa subindo no DOM até o card
+// 5. Interações no Card da Tarefa
+document.getElementById('task-list').addEventListener('click', (e) => {
     const taskCard = e.target.closest('.task-card');
+    if (!taskCard) return;
+
+    const action = e.target.dataset.action;
     const taskId = taskCard.dataset.taskId;
-    
     const project = app.projects[currentProjectIndex];
     const task = project.tasks.find(t => t.id === taskId);
 
+    // Expande os detalhes se clicar fora dos botões
+    if (!action) {
+        const detailsDiv = taskCard.querySelector('.task-details');
+        if (detailsDiv) {
+            detailsDiv.style.display = detailsDiv.style.display === 'none' ? 'block' : 'none';
+        }
+        return;
+    }
+
+    // Ações dos botões (Deletar ou Concluir)
     if (action === 'delete') {
         project.removeTask(taskId);
     } else if (action === 'complete') {
@@ -96,5 +96,4 @@ document.getElementById('task-list').addEventListener('click', (e) => {
     render();
 });
 
-// Inicializa a tela pela primeira vez
 render();
