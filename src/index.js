@@ -1,11 +1,14 @@
+import AppController from './AppController.js';
 import Task from './Task.js';
-import Project from './Project.js';
 
-// Testando instanciação
-const meuProjeto = new Project("Projeto de Teste");
-const minhaTarefa = new Task("Estudar Webpack", "Ler a documentação", "2026-04-30", "Alta");
+const app = new AppController();
 
-// Testando composição
-meuProjeto.addTask(minhaTarefa);
-
-console.log("Projeto com Tarefa:", meuProjeto);
+// Só adiciona a tarefa de teste se o Inbox estiver vazio
+if (app.projects[0].tasks.length === 0) {
+  const novaTarefa = new Task("Testar Storage", "Verificar F12", "2026-05-01", "Alta");
+  app.projects[0].addTask(novaTarefa);
+  app.saveData();
+  console.log("Tarefa criada e salva no localStorage!");
+} else {
+  console.log("Dados carregados do localStorage:", app.projects);
+}
